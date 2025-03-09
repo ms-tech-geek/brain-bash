@@ -1,10 +1,11 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { Brain } from 'lucide-react';
+import { AlertCircle, Brain } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
@@ -12,25 +13,39 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const displayName = formData.get('display-name') as string;
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
 
       if (data.user) {
         // Create profile
@@ -44,7 +59,12 @@ export default function SignUpPage() {
             },
           ]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          setError(profileError.message);
+          // Clean up the created user if profile creation fails
+          await supabase.auth.signOut();
+          return;
+        }
 
         toast({
           title: 'Account created successfully!',
@@ -54,11 +74,7 @@ export default function SignUpPage() {
         router.push('/auth/login');
       }
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error creating account',
-        description: error instanceof Error ? error.message : 'Please try again',
-      });
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +90,14 @@ export default function SignUpPage() {
             Join our community of quiz enthusiasts
           </p>
         </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-2">
