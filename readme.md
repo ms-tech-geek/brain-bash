@@ -7,8 +7,25 @@ An interactive quiz platform built with Next.js, Supabase, and shadcn/ui.
 ### Prerequisites
 
 - Node.js 18+ installed
-- A Supabase account
-- Git (optional)
+- Docker Desktop (for local Supabase)
+- Supabase CLI
+
+### Initial Setup
+
+1. Install Supabase CLI globally:
+   ```bash
+   npm install -g supabase
+   ```
+
+2. Login to Supabase:
+   ```bash
+   supabase login
+   ```
+
+3. Initialize Supabase:
+   ```bash
+   supabase init
+   ```
 
 ### Environment Setup
 
@@ -17,18 +34,34 @@ An interactive quiz platform built with Next.js, Supabase, and shadcn/ui.
    cp .env.example .env
    ```
 
-2. Click the "Connect to Supabase" button in the top right corner of the editor
-   - This will automatically create a new Supabase project
-   - The environment variables will be automatically added to your `.env` file
+2. Start local Supabase:
+   ```bash
+   npm run supabase:start
+   ```
+   This will output your local database URL and anon key. Update your `.env` file with these values.
 
-### Database Setup
+### Database Migrations
 
-1. Navigate to your Supabase project dashboard
-2. Go to "SQL Editor" in the left sidebar
-3. Click "New Query"
-4. Copy the contents of `supabase/migrations/create_profiles_table.sql`
-5. Paste the SQL into the query editor
-6. Click "Run" to execute the migration
+1. Create a new migration:
+   ```bash
+   npm run supabase:migration:new your_migration_name
+   ```
+   This creates a new timestamped SQL file in `supabase/migrations/`.
+
+2. Apply migrations:
+   ```bash
+   npm run supabase:migration:up
+   ```
+
+3. Revert last migration:
+   ```bash
+   npm run supabase:migration:down
+   ```
+
+4. Check Supabase status:
+   ```bash
+   npm run supabase:status
+   ```
 
 ### Development
 
@@ -40,6 +73,18 @@ An interactive quiz platform built with Next.js, Supabase, and shadcn/ui.
 2. Start the development server:
    ```bash
    npm run dev
+   ```
+
+### Production Deployment
+
+1. Link to your Supabase project:
+   ```bash
+   supabase link --project-ref your-project-ref
+   ```
+
+2. Push migrations to production:
+   ```bash
+   supabase db push
    ```
 
 ## Features
@@ -74,3 +119,19 @@ Row Level Security (RLS) policies ensure users can only:
 - Read their own profile
 - Update their own profile
 - Insert their profile during signup
+
+## Local Development Tips
+
+1. View Database:
+   - Local dashboard: http://localhost:54323
+   - Studio URL will be shown when you run `supabase start`
+
+2. Stopping Supabase:
+   ```bash
+   npm run supabase:stop
+   ```
+
+3. Troubleshooting:
+   - If Docker containers aren't running: `docker ps`
+   - Check Supabase status: `npm run supabase:status`
+   - Reset local database: `supabase db reset`
